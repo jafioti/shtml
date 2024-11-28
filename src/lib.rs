@@ -10,6 +10,8 @@ pub use shtml_macros::html;
 #[cfg(not(feature = "chaos"))]
 #[cfg(test)]
 mod tests {
+    use core::f64;
+
     use super::*;
     use alloc::{string::ToString, vec::Vec};
 
@@ -310,7 +312,7 @@ mod tests {
 
     #[test]
     fn it_works_with_floats() {
-        let x = 3.14;
+        let x = f64::consts::PI;
         let result = html! { <div>{x}</div> }.to_string();
 
         assert_eq!(result, r#"<div>3.14</div>"#);
@@ -342,7 +344,7 @@ mod tests {
 
     #[test]
     fn it_works_with_spread_attributes() {
-        let attrs = Vec::from([ ("data-test".to_string(), "test".to_string() ) ]);
+        let attrs = Vec::from([("data-test".to_string(), "test".to_string())]);
 
         let result = html! { <div {..attrs}>Test</div> }.to_string();
 
@@ -355,6 +357,13 @@ pub type Elements = Component;
 #[derive(Debug, PartialEq, Eq)]
 pub struct Component {
     pub html: String,
+}
+
+#[cfg(feature = "axum")]
+impl axum::response::IntoResponse for Component {
+    fn into_response(self) -> axum::response::Response {
+        axum::response::Html(self.html).into_response()
+    }
 }
 
 pub trait Render {
@@ -424,7 +433,7 @@ where
     }
 }
 
-impl <T> Render for Vec<(T, T)>
+impl<T> Render for Vec<(T, T)>
 where
     T: Render,
 {
